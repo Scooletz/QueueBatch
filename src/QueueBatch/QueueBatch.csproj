@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>QueueBatch</AssemblyName>
+    <RootNamespace>QueueBatch</RootNamespace>
+    <AssemblyTitle>QueueBatch</AssemblyTitle>
+    <Product>QueueBatch</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>QueueBatch</PackageId>
+    <Description>The WebJobs/Azure Functions trigger providing batches of Azure Storage Queues' messages directly to your function.</Description>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="3.0.0-beta5" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" PrivateAssets="All"/>
+  </ItemGroup>
+</Project>

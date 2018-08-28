@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <Authors>Szymon Kulec @Scooletz</Authors>
+    <PackageLicenseUrl>https://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright 2018-$([System.DateTime]::UtcNow.ToString(yyyy)) Szymon Kulec @Scooletz. All rights reserved</Copyright>
+    <PackageTags>Azure Functions WebJobs batch</PackageTags>
+    <PackageIconUrl>https://raw.githubusercontent.com/Scooletz/QueueBatch/dev/package_icon.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/Scooletz/QueueBatch</PackageProjectUrl>
+    <PackageOutputPath>..\..\nugets</PackageOutputPath>
+  </PropertyGroup>
+</Project>
