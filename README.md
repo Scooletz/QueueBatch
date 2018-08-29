@@ -18,7 +18,7 @@ Accessing the same resource with high frequency might simply not work. With `Que
 To use `QueueBatch` in your Function application, you need to use a custom `IMessageBatch` parameter type to accept a batch and mark it with an appropriate attribute
 
 ```c#
-public static async Task MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
+public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
 {
   // process messages
   foreach (var msg in batch.Messages)
@@ -35,7 +35,7 @@ public static async Task MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch bat
 You can also acknowledge only some of the messages. The rest, will be retried in a similar manner to the regural `[QueueTrigger]`
 
 ```c#
-public static async Task MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
+public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
 {
   // process messages
   foreach (var msg in batch.Messages)
