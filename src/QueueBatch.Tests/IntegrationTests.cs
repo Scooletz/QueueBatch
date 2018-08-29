@@ -13,7 +13,7 @@ namespace QueueBatch.Tests
         {
             const int count = 4;
             await SendUnique(count);
-            
+
             await RunHost<SimpleBatchDispatch>(async () =>
             {
                 await Output.Drain(count);
@@ -50,7 +50,7 @@ namespace QueueBatch.Tests
         {
             public static Task Do([QueueBatchTrigger(InputQueue, ParallelGets = 2, MaxBackOffInSeconds = 1)] IMessageBatch batch)
             {
-                // do nothing, do not ack any messges in batch
+                // do nothing, do not ack any messages in batch
                 return Task.CompletedTask;
             }
         }
