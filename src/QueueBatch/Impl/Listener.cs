@@ -90,8 +90,10 @@ namespace QueueBatch.Impl
                             await Delay(false, ct).ConfigureAwait(false);
                             continue;
                         }
+
+                        throw;
                     }
-                    
+
                     var messages = results.SelectMany(msgs => msgs).ToArray();
                     if (messages.Length > 0)
                     {
