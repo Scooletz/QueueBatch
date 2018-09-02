@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueueBatch", "QueueBatch\QueueBatch.csproj", "{8B6BDCE3-259D-45F4-A3D3-A6E14C34D528}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueueBatch.Tests", "QueueBatch.Tests\QueueBatch.Tests.csproj", "{BC8F576A-04A4-4918-84A0-A2171BDF5ECC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueueBatch.Tests", "QueueBatch.Tests\QueueBatch.Tests.csproj", "{BC8F576A-04A4-4918-84A0-A2171BDF5ECC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueueBatch.Benchmarks", "QueueBatch.Benchmarks\QueueBatch.Benchmarks.csproj", "{210F2599-59E5-4779-ACF8-A56AD880DDB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{BC8F576A-04A4-4918-84A0-A2171BDF5ECC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC8F576A-04A4-4918-84A0-A2171BDF5ECC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC8F576A-04A4-4918-84A0-A2171BDF5ECC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{210F2599-59E5-4779-ACF8-A56AD880DDB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{210F2599-59E5-4779-ACF8-A56AD880DDB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{210F2599-59E5-4779-ACF8-A56AD880DDB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{210F2599-59E5-4779-ACF8-A56AD880DDB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,3 +1,4 @@
+[assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("QueueBatch.Benchmarks")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("QueueBatch.Tests")]
 [assembly: System.Runtime.Versioning.TargetFrameworkAttribute(".NETStandard,Version=v2.0", FrameworkDisplayName="")]
 namespace QueueBatch
