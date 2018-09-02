@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,8 +6,7 @@ using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
+using QueueBatch.Impl.Queues;
 
 namespace QueueBatch.Impl
 {
@@ -17,26 +15,24 @@ namespace QueueBatch.Impl
         readonly RandomizedExponentialBackoffStrategy backoff;
         readonly ITriggeredFunctionExecutor executor;
         readonly int maxRetries;
-        readonly CloudQueue poisonQueue;
-        readonly CloudQueue queue;
+        readonly QueueFunctionLogic queue;
         readonly TimeSpan visibilityTimeout;
         readonly ILoggerFactory loggerFactory;
-        readonly Task<IEnumerable<CloudQueueMessage>>[] gets;
+        readonly Task<IRetrievedMessages>[] gets;
 
         Task runner;
         CancellationTokenSource tokenSource;
         static readonly TimeSpan VisibilityTimeout = TimeSpan.FromMinutes(10.0);
 
-        public Listener(ITriggeredFunctionExecutor executor, CloudQueue queue, CloudQueue poisonQueue,
+        public Listener(ITriggeredFunctionExecutor executor, QueueFunctionLogic queue,
             TimeSpan maxBackoff, int maxRetries, TimeSpan visibilityTimeout, int parallelGets, ILoggerFactory loggerFactory)
         {
             this.executor = executor;
             this.queue = queue;
-            this.poisonQueue = poisonQueue;
             this.maxRetries = maxRetries;
             this.visibilityTimeout = visibilityTimeout;
             this.loggerFactory = loggerFactory;
-            gets = new Task<IEnumerable<CloudQueueMessage>>[parallelGets];
+            gets = new Task<IRetrievedMessages>[parallelGets];
             backoff = new RandomizedExponentialBackoffStrategy(TimeSpan.FromMilliseconds(100), maxBackoff);
         }
 
@@ -72,50 +68,47 @@ namespace QueueBatch.Impl
             {
                 try
                 {
-                    IEnumerable<CloudQueueMessage>[] results = null;
+                    for (var i = 0; i < gets.Length; i++)
+                    {
+                        gets[i] = queue.GetMessages(VisibilityTimeout, ct);
+                    }
+
+                    var results = await Task.WhenAll(gets).ConfigureAwait(false);
+
+                    var messages = results.SelectMany(msgs => msgs.Messages).ToArray();
                     try
                     {
-                        for (var i = 0; i < gets.Length; i++)
+
+                        if (messages.Length > 0)
                         {
-                            gets[i] = queue.GetMessagesAsync(CloudQueueMessage.MaxNumberOfMessagesToPeek,
-                                VisibilityTimeout, null, null, ct);
-                        }
+                            var batch = new MessageBatch(messages);
+                            var data = new TriggeredFunctionData { TriggerValue = batch };
+                            var result = await executor.TryExecuteAsync(data, ct).ConfigureAwait(false);
 
-                        results = await Task.WhenAll(gets).ConfigureAwait(false);
-                    }
-                    catch (StorageException ex)
-                    {
-                        if (ex.IsNotFoundQueueNotFound() || ex.IsConflictQueueBeingDeletedOrDisabled() || ex.IsServerSideError())
-                        {
-                            await Delay(false, ct).ConfigureAwait(false);
-                            continue;
-                        }
-
-                        throw;
-                    }
-
-                    var messages = results.SelectMany(msgs => msgs).ToArray();
-                    if (messages.Length > 0)
-                    {
-                        var batch = new MessageBatch(messages);
-                        var data = new TriggeredFunctionData { TriggerValue = batch };
-                        var result = await executor.TryExecuteAsync(data, ct).ConfigureAwait(false);
-
-                        if (result.Succeeded)
-                        {
-                            await batch.Complete(queue, poisonQueue, maxRetries, visibilityTimeout, ct);
-                            await Delay(true, ct).ConfigureAwait(false);
+                            if (result.Succeeded)
+                            {
+                                await batch.Complete(queue, maxRetries, visibilityTimeout, ct);
+                                await Delay(true, ct).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                await batch.RetryAll(queue, maxRetries, visibilityTimeout, ct);
+                                await Delay(false, ct).ConfigureAwait(false);
+                            }
                         }
                         else
                         {
-                            await batch.RetryAll(queue, poisonQueue, maxRetries, visibilityTimeout, ct);
+                            logger.LogDebug("No messages received");
                             await Delay(false, ct).ConfigureAwait(false);
                         }
                     }
-                    else
+                    finally
                     {
-                        logger.LogDebug("No messages received");
-                        await Delay(false, ct).ConfigureAwait(false);
+                        // dispose all results
+                        for (var i = 0; i < results.Length; i++)
+                        {
+                            results[i].Dispose();
+                        }
                     }
                 }
                 catch (TaskCanceledException)

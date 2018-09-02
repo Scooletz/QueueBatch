@@ -32,5 +32,6 @@ namespace QueueBatch
         public int MaxBackOffInSeconds { get; set; }
         public int ParallelGets { get; set; }
         public string QueueName { get; }
+        public bool UseFasterQueues { get; set; }
     }
 }

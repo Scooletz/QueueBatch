@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
@@ -39,14 +40,18 @@ namespace QueueBatch.Tests
         [TearDown]
         public Task TearDown() => Task.WhenAll(Batch.ClearAsync(), Output.ClearAsync(), Poison.CreateIfNotExistsAsync());
 
-        protected Task SendUnique(int count = 1)
+        protected async Task<List<string>> SendUnique(int count = 1)
         {
             var sends = new Task[count];
+            var list = new List<string>();
             for (var i = 0; i < count; i++)
             {
-                sends[i] = Batch.AddMessageAsync(new CloudQueueMessage(Guid.NewGuid().ToString("N")));
+                var content = Guid.NewGuid().ToString("N");
+                list.Add(content);
+                sends[i] = Batch.AddMessageAsync(new CloudQueueMessage(content));
             }
-            return Task.WhenAll(sends);
+            await Task.WhenAll(sends);
+            return list;
         }
 
         protected static async Task RunHost<TFunctionProvidingType>(Func<Task> runner)
