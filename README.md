@@ -15,12 +15,13 @@ Accessing the same resource with high frequency might simply not work. With `Que
 
 ## Usage
 
+### Basic
+
 To use `QueueBatch` in your Function application, you need to use a custom `IMessageBatch` parameter type to accept a batch and mark it with an appropriate attribute
 
 ```c#
 public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
 {
-  // process messages
   foreach (var msg in batch.Messages)
   {
     // do something with payload
@@ -37,7 +38,6 @@ You can also acknowledge only some of the messages. The rest, will be retried in
 ```c#
 public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
 {
-  // process messages
   foreach (var msg in batch.Messages)
   {
     // do something with payload
@@ -49,6 +49,27 @@ public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
   }
 }
 ```
+
+### Faster queues
+
+`QueueBatch` provides an alternative client for accessing Azure Storage Queues that is much faster then the one provided by SDK (up to 20x). To enable it (it's opt-in), you need to set `.UseFasterQueues` to `true`.
+
+```c#
+public static void MyFunc([QueueBatchTrigger("myqueue", UseFasterQueues = true)] IMessageBatch batch)
+{
+  // ...
+}
+```
+
+### Parallel gets
+
+As a single operation of getting messages can obtain no more than 32, you can request issuing multiple parallel gets. The maximum number of messages in a batch will be equal to `32 * ParallelGets`.
+
+```c#
+public static void MyFunc([QueueBatchTrigger("myqueue", ParallelGets = 2)] IMessageBatch batch)
+{
+  // ...
+}
 
 ## Licensing
 
