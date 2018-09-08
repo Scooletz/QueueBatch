@@ -70,6 +70,7 @@ public static void MyFunc([QueueBatchTrigger("myqueue", ParallelGets = 2)] IMess
 {
   // ...
 }
+```
 
 ## Licensing
 
