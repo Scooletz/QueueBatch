@@ -45,7 +45,7 @@ namespace QueueBatch.Impl
 
         public Task StopAsync(CancellationToken ct)
         {
-            tokenSource.Cancel();
+            Cancel();
             return runner;
         }
 
@@ -75,26 +75,34 @@ namespace QueueBatch.Impl
 
                     var results = await Task.WhenAll(gets).ConfigureAwait(false);
 
-                    var messages = results.SelectMany(msgs => msgs.Messages).ToArray();
-                    try
+                    using (new ComposedDisposable(results))
                     {
+                        var messages = results.SelectMany(msgs => msgs.Messages).ToArray();
 
                         if (messages.Length > 0)
                         {
                             var batch = new MessageBatch(messages);
-                            var data = new TriggeredFunctionData { TriggerValue = batch };
-                            var result = await executor.TryExecuteAsync(data, ct).ConfigureAwait(false);
+                            var data = new TriggeredFunctionData {TriggerValue = batch};
+                            var result = await executor.TryExecuteAsync(data, CancellationToken.None).ConfigureAwait(false);
 
-                            if (result.Succeeded)
+                            try
                             {
-                                await batch.Complete(queue, maxRetries, visibilityTimeout, ct);
-                                await Delay(true, ct).ConfigureAwait(false);
+                                if (result.Succeeded)
+                                {
+                                    await batch.Complete(queue, maxRetries, visibilityTimeout, CancellationToken.None);
+                                }
+                                else
+                                {
+                                    await batch.RetryAll(queue, maxRetries, visibilityTimeout, CancellationToken.None);
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                await batch.RetryAll(queue, maxRetries, visibilityTimeout, ct);
+                                logger.LogError("Exception occured when completing batch", ex);
                                 await Delay(false, ct).ConfigureAwait(false);
                             }
+
+                            await Delay(result.Succeeded, ct).ConfigureAwait(false);
                         }
                         else
                         {
@@ -102,14 +110,10 @@ namespace QueueBatch.Impl
                             await Delay(false, ct).ConfigureAwait(false);
                         }
                     }
-                    finally
-                    {
-                        // dispose all results
-                        for (var i = 0; i < results.Length; i++)
-                        {
-                            results[i].Dispose();
-                        }
-                    }
+                }
+                catch (Exception ex) when (ex.InnerException != null &&
+                                           ex.InnerException.GetType() == typeof(TaskCanceledException))
+                {
                 }
                 catch (TaskCanceledException)
                 {

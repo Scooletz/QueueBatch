@@ -54,8 +54,9 @@ namespace QueueBatch.Tests
             return list;
         }
 
-        protected static async Task RunHost<TFunctionProvidingType>(Func<Task> runner)
+        protected static async Task RunHost<TFunctionProvidingType>(Func<Task> runner, TimeSpan? limit = null)
         {
+            var limitValue = limit.GetValueOrDefault(TimeSpan.FromSeconds(15));
             using (var host = BuildHost<TFunctionProvidingType>())
             {
                 await host.StartAsync();
@@ -66,7 +67,7 @@ namespace QueueBatch.Tests
                 }
                 else
                 {
-                    await runner().LimitTo(TimeSpan.FromSeconds(15));
+                    await runner().LimitTo(limitValue);
                 }
 
                 await host.StopAsync();

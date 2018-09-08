@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 
@@ -11,19 +12,31 @@ namespace QueueBatch.Impl.Queues
     class Result<T>
     {
         public Result(HttpResponseMessage response)
-            : this(response.StatusCode, response.ReasonPhrase, default)
-        { }
+        {
+            Code = response.StatusCode;
+            ErrorCode = response.Headers.GetValues("x-ms-error-code").FirstOrDefault();
+            ReasonPhrase = response.ReasonPhrase;
+            Value = default;
+        }
 
-        public Result(HttpStatusCode code, string reasonString, T value)
+        public Result(HttpStatusCode code, string errorCode, string reasonPhrase)
         {
             Code = code;
-            ReasonString = reasonString;
+            ErrorCode = errorCode;
+            ReasonPhrase = reasonPhrase;
+            Value = default;
+        }
+
+        public Result(HttpStatusCode code, T value)
+        {
+            Code = code;
             Value = value;
         }
 
         public readonly HttpStatusCode Code;
-        public readonly string ReasonString;
+        public readonly string ErrorCode;
         public readonly T Value;
+        public readonly string ReasonPhrase;
 
         public bool IsServerSideError
         {
@@ -34,6 +47,6 @@ namespace QueueBatch.Impl.Queues
             }
         }
 
-        public Exception AsException() => new Exception(ReasonString);
+        public Exception AsException() => new Exception(ErrorCode);
     }
 }

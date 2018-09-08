@@ -82,7 +82,7 @@ namespace QueueBatch.Tests
         static void AssertEqual<T>(Result<T> a, Result<T> b, Comparison<T> comparison = null)
         {
             Assert.AreEqual(a.Code, a.Code);
-            Assert.AreEqual(a.ReasonString, a.ReasonString);
+            Assert.AreEqual(a.ErrorCode, a.ErrorCode);
 
             if (a.Value is IComparable<T> comparable)
             {

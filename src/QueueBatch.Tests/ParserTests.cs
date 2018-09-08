@@ -9,7 +9,7 @@ namespace QueueBatch.Tests
     public class ParserTests
     {
         [TestCaseSource(nameof(GetCases))]
-        public void Parse(Messages messagesObj)
+        public void GetMessages(Messages messagesObj)
         {
             var data = messagesObj.Data;
             var bytes = BuildXmlBytes(data);
@@ -54,6 +54,25 @@ namespace QueueBatch.Tests
                     MessageText = "text"
                 }
             )).SetName("Big dequeue count");
+
+            yield return new TestCaseData(new Messages(
+
+                new MessageData
+                {
+                    Id = "id1",
+                    PopReceipt = "pop1",
+                    DequeueCount = 1,
+                    MessageText = "0001"
+                },
+
+                new MessageData
+                {
+                    Id = "id2",
+                    PopReceipt = "pop2",
+                    DequeueCount = 2,
+                    MessageText = "0002"
+                }
+            )).SetName("Multiple");
         }
 
         static byte[] BuildXmlBytes(IEnumerable<MessageData> data)
@@ -96,6 +115,11 @@ namespace QueueBatch.Tests
         public class Messages
         {
             public MessageData[] Data;
+
+            public Messages(params MessageData[] data)
+            {
+                Data = data;
+            }
 
             public Messages(MessageData messageData)
             {

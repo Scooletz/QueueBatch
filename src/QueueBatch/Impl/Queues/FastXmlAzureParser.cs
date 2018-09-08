@@ -6,7 +6,7 @@ using System.Text;
 
 namespace QueueBatch.Impl.Queues
 {
-    class FastXmlAzureParser
+    static class FastXmlAzureParser
     {
         static readonly QueueMessageNodes Nodes = new QueueMessageNodes();
 

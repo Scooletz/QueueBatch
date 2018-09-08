@@ -25,12 +25,12 @@ namespace QueueBatch.Impl.Queues
                 return result.Value;
             }
 
-            if (result.Code == HttpStatusCode.NotFound && result.ReasonString == QueueErrorCodeStrings.QueueNotFound)
+            if (result.Code == HttpStatusCode.NotFound && result.ErrorCode == QueueErrorCodeStrings.QueueNotFound)
             {
                 return NoMessages.Instance;
             }
 
-            if (result.Code == HttpStatusCode.Conflict && result.ReasonString == QueueErrorCodeStrings.QueueBeingDeleted)
+            if (result.Code == HttpStatusCode.Conflict && result.ErrorCode == QueueErrorCodeStrings.QueueBeingDeleted)
             {
                 return NoMessages.Instance;
             }
@@ -54,20 +54,20 @@ namespace QueueBatch.Impl.Queues
                 return;
             }
 
-            if (result.Code == HttpStatusCode.BadRequest && result.ReasonString == QueueErrorCodeStrings.PopReceiptMismatch)
+            if (result.Code == HttpStatusCode.BadRequest && result.ErrorCode == QueueErrorCodeStrings.PopReceiptMismatch)
             {
                 return;
             }
 
             if (result.Code == HttpStatusCode.NotFound)
             {
-                if (result.ReasonString == QueueErrorCodeStrings.QueueNotFound || result.ReasonString == QueueErrorCodeStrings.MessageNotFound)
+                if (result.ErrorCode == QueueErrorCodeStrings.QueueNotFound || result.ErrorCode == QueueErrorCodeStrings.MessageNotFound)
                 {
                     return;
                 }
             }
 
-            if (result.Code == HttpStatusCode.Conflict && result.ReasonString == QueueErrorCodeStrings.QueueBeingDeleted)
+            if (result.Code == HttpStatusCode.Conflict && result.ErrorCode == QueueErrorCodeStrings.QueueBeingDeleted)
             {
                 return;
             }
@@ -87,20 +87,20 @@ namespace QueueBatch.Impl.Queues
                 return;
             }
 
-            if (result.Code == HttpStatusCode.BadRequest && result.ReasonString == QueueErrorCodeStrings.PopReceiptMismatch)
+            if (result.Code == HttpStatusCode.BadRequest && result.ErrorCode == QueueErrorCodeStrings.PopReceiptMismatch)
             {
                 return;
             }
 
             if (result.Code == HttpStatusCode.NotFound)
             {
-                if (result.ReasonString == QueueErrorCodeStrings.QueueNotFound || result.ReasonString == QueueErrorCodeStrings.MessageNotFound)
+                if (result.ErrorCode == QueueErrorCodeStrings.QueueNotFound || result.ErrorCode == QueueErrorCodeStrings.MessageNotFound)
                 {
                     return;
                 }
             }
 
-            if (result.Code == HttpStatusCode.Conflict && result.ReasonString == QueueErrorCodeStrings.QueueBeingDeleted)
+            if (result.Code == HttpStatusCode.Conflict && result.ErrorCode == QueueErrorCodeStrings.QueueBeingDeleted)
             {
                 return;
             }

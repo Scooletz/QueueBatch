@@ -47,9 +47,9 @@ namespace QueueBatch.Impl.Queues
                         using (var stream = new MemoryStream(bytes))
                         {
                             await response.Content.CopyToAsync(stream).ConfigureAwait(false);
-                            var messages = FastXmlAzureParser.ParseGetMessages(new Memory<byte>(bytes, 0, (int)stream.Length));
+                            var messages = FastXmlAzureParser.ParseGetMessages(new Memory<byte>(bytes, 0, (int)stream.Position));
 
-                            return new Result<IRetrievedMessages>(response.StatusCode, null, new RetrievedMessages(messages, bytes, this));
+                            return new Result<IRetrievedMessages>(response.StatusCode, new RetrievedMessages(messages, bytes, this));
                         }
                     }
 
@@ -62,12 +62,12 @@ namespace QueueBatch.Impl.Queues
         {
             using (var http = GetClient())
             {
-                var url = messageUri + "/" + messageId + "?popreceipt=" + popReceipt + "&" + sas;
+                var url = messageUri + "/" + messageId + "?popreceipt=" + Uri.EscapeDataString(popReceipt) + "&" + sas;
                 using (var response = await http.DeleteAsync(url, ct).ConfigureAwait(false))
                 {
                     if (response.StatusCode == HttpStatusCode.NoContent)
                     {
-                        return new Result<bool>(response.StatusCode, null, true);
+                        return new Result<bool>(response.StatusCode, true);
                     }
 
                     return new Result<bool>(response);
@@ -85,7 +85,7 @@ namespace QueueBatch.Impl.Queues
                 {
                     if (response.StatusCode == HttpStatusCode.NoContent)
                     {
-                        return new Result<bool>(response.StatusCode, null, true);
+                        return new Result<bool>(response.StatusCode, true);
                     }
 
                     return new Result<bool>(response);
@@ -101,7 +101,7 @@ namespace QueueBatch.Impl.Queues
                 {
                     if (response.StatusCode == HttpStatusCode.Created)
                     {
-                        return new Result<bool>(response.StatusCode, null, true);
+                        return new Result<bool>(response.StatusCode, true);
                     }
 
                     return new Result<bool>(response);
@@ -111,7 +111,13 @@ namespace QueueBatch.Impl.Queues
 
         static string GetTimeout(TimeSpan visibilityTimeout) => ((int)visibilityTimeout.TotalSeconds).ToString();
 
-        HttpClient GetClient() => new HttpClient(handlerCache.GetHandler());
+        HttpClient GetClient()
+        {
+            var client = new HttpClient(handlerCache.GetHandler());
+            client.DefaultRequestHeaders.TryAddWithoutValidation("x-ms-version", "2017-07-29");
+            return client;
+        }
+
         byte[] GetBytes() => gettingPool.TryDequeue(out var bytes) ? bytes : new byte[GetAllocSize];
         void Return(byte[] bytes) => gettingPool.Enqueue(bytes);
         static string GetSAS(string sas) => sas.StartsWith("?") ? sas.Substring(1) : sas;

@@ -47,7 +47,7 @@ namespace QueueBatch.Impl
             CancellationToken ct, HashSet<string> processed)
         {
             var tasks = new Task[messages.Length];
-            for (var i = 0; i < tasks.Length; i++)
+            for (var i = 0; i < messages.Length; i++)
             {
                 var message = messages[i];
 

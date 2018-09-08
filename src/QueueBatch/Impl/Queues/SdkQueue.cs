@@ -24,7 +24,7 @@ namespace QueueBatch.Impl.Queues
             {
                 var cloudQueueMessages = await queue.GetMessagesAsync(CloudQueueMessage.MaxNumberOfMessagesToPeek, visibilityTimeout, null, null, ct).ConfigureAwait(false);
                 var retrievedMessages = new RetrievedMessages(cloudQueueMessages.Select(m => new Message(m.Id, m.AsBytes, m.PopReceipt, m.DequeueCount)).ToArray());
-                return new Result<IRetrievedMessages>(HttpStatusCode.OK, null, retrievedMessages);
+                return new Result<IRetrievedMessages>(HttpStatusCode.OK, retrievedMessages);
             }
             catch (StorageException ex)
             {
@@ -40,7 +40,7 @@ namespace QueueBatch.Impl.Queues
             try
             {
                 await queue.AddMessageAsync(message).ConfigureAwait(false);
-                return new Result<bool>(HttpStatusCode.Created, null, true);
+                return new Result<bool>(HttpStatusCode.Created, true);
             }
             catch (StorageException ex)
             {
@@ -57,7 +57,7 @@ namespace QueueBatch.Impl.Queues
             try
             {
                 await queue.UpdateMessageAsync(message, visibilityTimeout, MessageUpdateFields.Content | MessageUpdateFields.Visibility).ConfigureAwait(false);
-                return new Result<bool>(HttpStatusCode.NoContent, null, true);
+                return new Result<bool>(HttpStatusCode.NoContent, true);
             }
             catch (StorageException ex)
             {
@@ -70,7 +70,7 @@ namespace QueueBatch.Impl.Queues
             try
             {
                 await queue.DeleteMessageAsync(messageId, popReceipt).ConfigureAwait(false);
-                return new Result<bool>(HttpStatusCode.NoContent, null, true);
+                return new Result<bool>(HttpStatusCode.NoContent, true);
             }
             catch (StorageException ex)
             {
@@ -78,7 +78,7 @@ namespace QueueBatch.Impl.Queues
             }
         }
 
-        static Result<T> FromException<T>(StorageException ex) => new Result<T>((HttpStatusCode)ex.RequestInformation.HttpStatusCode, ex.RequestInformation.HttpStatusMessage, default);
+        static Result<T> FromException<T>(StorageException ex) => new Result<T>((HttpStatusCode)ex.RequestInformation.HttpStatusCode, ex.RequestInformation.ExtendedErrorInformation.ErrorCode, ex.RequestInformation.ExtendedErrorInformation.ErrorMessage);
 
         class RetrievedMessages : IRetrievedMessages
         {
