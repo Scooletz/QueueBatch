@@ -1,4 +1,4 @@
-![Icon](https://raw.githubusercontent.com/Scooletz/QueueBatch/dev/package_icon.png)
+![Icon](https://raw.githubusercontent.com/Scooletz/QueueBatch/develop/package_icon.png)
 
 # QueueBatch
 
