@@ -1,16 +1,20 @@
 ﻿using System;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using QueueBatch.Impl;
 
 namespace QueueBatch
 {
     public static class QueueBatchExtensionConfigExtensions
     {
-        public static void UseQueueBatch(this JobHostConfiguration config)
+        public static void AddQueueBatch(this IWebJobsBuilder builder)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
+            if (builder == null)
+                throw new ArgumentNullException(nameof(builder));
 
-            config.RegisterExtensionConfigProvider(new QueueBatchExtensionConfig());
+            builder.AddExtension<QueueBatchExtensionConfigProvider>();
+            builder.Services.TryAddSingleton<BindingProvider>();
+            builder.Services.TryAddSingleton<IQueueClientProvider, QueueClientProvider>();
         }
     }
 }

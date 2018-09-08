@@ -35,7 +35,7 @@ namespace QueueBatch.Impl
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             var batch = (IMessageBatch) value;
-            var data = new TriggerData(new ValueBinder(param, batch), new Dictionary<string, object>
+            var data = new TriggerData(new ValueProvider(param, batch), new Dictionary<string, object>
             {
                 {"data", batch}
             });

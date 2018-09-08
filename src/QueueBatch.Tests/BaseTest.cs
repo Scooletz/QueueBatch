@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using NUnit.Framework;
@@ -20,8 +22,6 @@ namespace QueueBatch.Tests
         protected CloudQueue Batch { get; private set; }
         protected CloudQueue Output { get; private set; }
         protected CloudQueue Poison { get; private set; }
-
-        const string ConnectionString = "UseDevelopmentStorage=true";
 
         protected BaseTest()
         {
@@ -54,7 +54,7 @@ namespace QueueBatch.Tests
             return list;
         }
 
-        protected static async Task RunHost<TFunctionProvidingType>(Func<Task> runner, TimeSpan? limit = null)
+        protected async Task RunHost<TFunctionProvidingType>(Func<Task> runner, TimeSpan? limit = null)
         {
             var limitValue = limit.GetValueOrDefault(TimeSpan.FromSeconds(15));
             using (var host = BuildHost<TFunctionProvidingType>())
@@ -74,19 +74,41 @@ namespace QueueBatch.Tests
             }
         }
 
-        static JobHost BuildHost<TFunctionProvidingType>()
+        IHost BuildHost<TFunctionProvidingType>()
         {
-            var config = new JobHostConfiguration
-            {
-                HostId = Guid.NewGuid().ToString("n"),
-                TypeLocator = new SingleTypeLocator<TFunctionProvidingType>(),
-                StorageConnectionString = ConnectionString,
-                DashboardConnectionString = ConnectionString,
-            };
+            return new HostBuilder()
+                .ConfigureWebJobs(b =>
+                {
+                    b.Services.AddSingleton<IQueueClientProvider>(new CloudQueueProvider(queues));
+                    b.Services.AddSingleton<StorageAccountProvider>(new DeveloperStorageAccountProvider());
+                    b.AddQueueBatch();
+                    b.AddAzureStorageCoreServices();
+                    b.AddAzureStorage();
+                    b.Services.AddSingleton<ITypeLocator>(new SingleTypeLocator<TFunctionProvidingType>());
+                })
+                .Build();
+        }
 
-            config.UseQueueBatch();
-            config.UseDevelopmentSettings();
-            return new JobHost(config);
+        class CloudQueueProvider : IQueueClientProvider
+        {
+            readonly CloudQueueClient client;
+
+            public CloudQueueProvider(CloudQueueClient client)
+            {
+                this.client = client;
+            }
+
+            public CloudQueueClient GetClient() => client;
+        }
+
+        class DeveloperStorageAccountProvider : StorageAccountProvider
+        {
+            public DeveloperStorageAccountProvider()
+                : base(null)
+            {
+            }
+
+            public override StorageAccount Get(string name) => StorageAccount.New(CloudStorageAccount.DevelopmentStorageAccount);
         }
     }
 }

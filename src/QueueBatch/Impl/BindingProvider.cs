@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using QueueBatch.Impl.Queues;
 
@@ -14,13 +12,13 @@ namespace QueueBatch.Impl
     {
         public const string PoisonQueueSuffix = "-poison";
 
-        readonly CloudQueueClient queues;
         readonly ILoggerFactory loggerFactory;
+        readonly IQueueClientProvider provider;
 
-        public BindingProvider(JobHostConfiguration config)
+        public BindingProvider(ILoggerFactory loggerFactory, IQueueClientProvider provider)
         {
-            queues = CloudStorageAccount.Parse(config.StorageConnectionString).CreateCloudQueueClient();
-            loggerFactory = config.LoggerFactory;
+            this.loggerFactory = loggerFactory;
+            this.provider = provider;
         }
 
         public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -32,7 +30,7 @@ namespace QueueBatch.Impl
 
             var queueName = attr.QueueName;
 
-            var messageQueue = queues.GetQueueReference(queueName);
+            var messageQueue = provider.GetClient().GetQueueReference(queueName);
             var poisonQueue = CreatePoisonQueue(queueName);
 
             await Task.WhenAll(
@@ -51,7 +49,7 @@ namespace QueueBatch.Impl
 
         CloudQueue CreatePoisonQueue(string name)
         {
-            return queues.GetQueueReference(name + PoisonQueueSuffix);
+            return provider.GetClient().GetQueueReference(name + PoisonQueueSuffix);
         }
     }
 }

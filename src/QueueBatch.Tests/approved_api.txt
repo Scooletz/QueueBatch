@@ -15,14 +15,9 @@ namespace QueueBatch
         public readonly System.Memory<byte> Payload;
         public Message(string id, System.Memory<byte> payload) { }
     }
-    public class QueueBatchExtensionConfig : Microsoft.Azure.WebJobs.Host.Config.IExtensionConfigProvider
-    {
-        public QueueBatchExtensionConfig() { }
-        public void Initialize(Microsoft.Azure.WebJobs.Host.Config.ExtensionConfigContext context) { }
-    }
     public class static QueueBatchExtensionConfigExtensions
     {
-        public static void UseQueueBatch(this Microsoft.Azure.WebJobs.JobHostConfiguration config) { }
+        public static void AddQueueBatch(this Microsoft.Azure.WebJobs.IWebJobsBuilder builder) { }
     }
     [Microsoft.Azure.WebJobs.Description.BindingAttribute()]
     [System.AttributeUsageAttribute(System.AttributeTargets.Parameter | System.AttributeTargets.All)]
