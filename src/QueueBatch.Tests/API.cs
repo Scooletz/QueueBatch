@@ -18,7 +18,7 @@ namespace QueueBatch.Tests
         static void Approve(string publicApi,[CallerFilePath] string filePath = null)
         {
             var directory = Path.GetDirectoryName(filePath);
-            var file = Path.Combine(directory, "approved_api.cs");
+            var file = Path.Combine(directory, "approved_api.txt");
             if (File.Exists(file) == false)
             {
                 File.WriteAllText(file, publicApi);

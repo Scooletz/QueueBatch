@@ -7,7 +7,7 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Queue;
+using QueueBatch.Impl.Queues;
 
 namespace QueueBatch.Impl
 {
@@ -17,14 +17,12 @@ namespace QueueBatch.Impl
         readonly int parallelGets;
         readonly ILoggerFactory loggerFactory;
         readonly ParameterInfo param;
-        readonly CloudQueue poisonQueue;
-        readonly CloudQueue queue;
+        readonly QueueFunctionLogic queue;
 
-        public TriggerBinding(ParameterInfo param, CloudQueue queue, CloudQueue poisonQueue, TimeSpan maxBackoff, int parallelGets, ILoggerFactory loggerFactory)
+        public TriggerBinding(ParameterInfo param, QueueFunctionLogic queue, TimeSpan maxBackoff, int parallelGets, ILoggerFactory loggerFactory)
         {
             this.param = param;
             this.queue = queue;
-            this.poisonQueue = poisonQueue;
             this.maxBackoff = maxBackoff;
             this.parallelGets = parallelGets;
             this.loggerFactory = loggerFactory;
@@ -47,7 +45,7 @@ namespace QueueBatch.Impl
 
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
         {
-            return Task.FromResult<IListener>(new Listener(context.Executor, queue, poisonQueue, maxBackoff, 5, TimeSpan.FromSeconds(1), parallelGets, loggerFactory));
+            return Task.FromResult<IListener>(new Listener(context.Executor, queue, maxBackoff, 5, TimeSpan.FromSeconds(1), parallelGets, loggerFactory));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

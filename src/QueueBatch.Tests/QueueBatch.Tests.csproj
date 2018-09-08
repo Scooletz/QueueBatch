@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
     <PackageReference Include="PublicApiGenerator" Version="8.0.0" />
     <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.1" />
   </ItemGroup>
 
   <ItemGroup>

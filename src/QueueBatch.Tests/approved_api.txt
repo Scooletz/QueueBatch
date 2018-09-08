@@ -1,3 +1,4 @@
+[assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("QueueBatch.Benchmarks")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("QueueBatch.Tests")]
 [assembly: System.Runtime.Versioning.TargetFrameworkAttribute(".NETStandard,Version=v2.0", FrameworkDisplayName="")]
 namespace QueueBatch
@@ -32,5 +33,6 @@ namespace QueueBatch
         public int MaxBackOffInSeconds { get; set; }
         public int ParallelGets { get; set; }
         public string QueueName { get; }
+        public bool UseFasterQueues { get; set; }
     }
 }

@@ -37,5 +37,10 @@ namespace QueueBatch
         /// The number of parallel GetMessagesAsync.
         /// </summary>
         public int ParallelGets { get; set; }
+
+        /// <summary>
+        /// If set to true, instead of using Azure Storage SDK Queues the listeners will use a custom implementation of queues client (with a tailored XML deserialization).
+        /// </summary>
+        public bool UseFasterQueues { get; set; }
     }
 }

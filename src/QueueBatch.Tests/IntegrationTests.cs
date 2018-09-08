@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -51,6 +54,54 @@ namespace QueueBatch.Tests
             public static Task Do([QueueBatchTrigger(InputQueue, ParallelGets = 2, MaxBackOffInSeconds = 1)] IMessageBatch batch)
             {
                 // do nothing, do not ack any messages in batch
+                return Task.CompletedTask;
+            }
+        }
+
+        const int LotsCount = 1023;
+
+        [Test]
+        [Explicit("Benchmark like")]
+        public async Task Batch_with_sdk()
+        {
+            await SendUnique(LotsCount);
+
+            var sw = Stopwatch.StartNew();
+            await RunHost<BatchWithSdk>(() => BatchWithSdk.CountDown.Wait(), TimeSpan.FromMinutes(5));
+            Console.WriteLine($"Took: {sw.Elapsed}");
+        }
+
+        public class BatchWithSdk
+        {
+            internal static readonly CountdownAsync CountDown = new CountdownAsync(LotsCount);
+
+            public static Task Do([QueueBatchTrigger(InputQueue, UseFasterQueues = false)] IMessageBatch batch)
+            {
+                CountDown.Release(batch.Messages.Count());
+                batch.MarkAllAsProcessed();
+                return Task.CompletedTask;
+            }
+        }
+
+        [Test]
+        [Explicit("Benchmark like")]
+        public async Task Batch_with_custom()
+        {
+            await SendUnique(LotsCount);
+
+            var sw = Stopwatch.StartNew();
+            await RunHost<BatchWithCustom>(() => BatchWithCustom.CountDown.Wait(), TimeSpan.FromMinutes(5));
+            Console.WriteLine($"Took: {sw.Elapsed}");
+        }
+
+        public class BatchWithCustom
+        {
+            internal static readonly CountdownAsync CountDown = new CountdownAsync(LotsCount);
+
+            public static Task Do([QueueBatchTrigger(InputQueue, UseFasterQueues = true)] IMessageBatch batch)
+            {
+                CountDown.Release(batch.Messages.Count());
+                batch.MarkAllAsProcessed();
                 return Task.CompletedTask;
             }
         }
