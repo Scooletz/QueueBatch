@@ -26,7 +26,7 @@ namespace QueueBatch.Tests
 
         public class SimpleBatchDispatch
         {
-            public static async Task Do([QueueBatchTrigger(InputQueue, ParallelGets = 2, MaxBackOffInSeconds = 30)] IMessageBatch batch, [Queue(OutputQueue)] CloudQueue output, TraceWriter trace)
+            public static async Task Do([QueueBatchTrigger(InputQueue, ParallelGets = 2, MaxBackOffInSeconds = 30)] IMessageBatch batch, [Queue(OutputQueue)] CloudQueue output)
             {
                 foreach (var message in batch.Messages)
                 {
