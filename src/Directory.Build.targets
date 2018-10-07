@@ -8,7 +8,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Copyright>Copyright 2018-$([System.DateTime]::UtcNow.ToString(yyyy)) Szymon Kulec @Scooletz. All rights reserved</Copyright>
     <PackageTags>Azure Functions WebJobs batch</PackageTags>
-    <PackageIconUrl>https://raw.githubusercontent.com/Scooletz/QueueBatch/dev/package_icon.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/Scooletz/QueueBatch/develop/package_icon.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/Scooletz/QueueBatch</PackageProjectUrl>
     <PackageOutputPath>..\..\nugets</PackageOutputPath>
   </PropertyGroup>
