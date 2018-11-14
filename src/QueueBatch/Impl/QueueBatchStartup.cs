@@ -7,7 +7,7 @@ namespace QueueBatch.Impl
     {
         public void Configure(IWebJobsBuilder builder)
         {
-            builder.AddSignalR();
+            builder.AddQueueBatch();
         }
     }
 }
