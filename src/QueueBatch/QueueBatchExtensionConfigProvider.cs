@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Azure.WebJobs.Hosting;
 using QueueBatch.Impl;
 
 namespace QueueBatch
