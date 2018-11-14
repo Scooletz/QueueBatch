@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace QueueBatch.Impl.Queues
     {
         const int GetAllocSize = 4 * 1024 * 1024;
         readonly ConcurrentQueue<byte[]> gettingPool = new ConcurrentQueue<byte[]>();
+        readonly ConcurrentQueue<GCHandle> handles = new ConcurrentQueue<GCHandle>();
 
         const int PutAllocSize = 128 * 1024;
         readonly ConcurrentQueue<byte[]> puttingPool = new ConcurrentQueue<byte[]>();
@@ -43,11 +45,11 @@ namespace QueueBatch.Impl.Queues
                 {
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        var bytes = GetBytes();
+                        var bytes = GetPinnedBytes();
                         using (var stream = new MemoryStream(bytes))
                         {
                             await response.Content.CopyToAsync(stream).ConfigureAwait(false);
-                            var messages = FastXmlAzureParser.ParseGetMessages(new Memory<byte>(bytes, 0, (int)stream.Position));
+                            var messages = FastXmlAzureParser.ParseGetMessages(MemoryMarshal.CreateFromPinnedArray(bytes, 0, (int)stream.Position));
 
                             return new Result<IRetrievedMessages>(response.StatusCode, new RetrievedMessages(messages, bytes, this));
                         }
@@ -118,7 +120,19 @@ namespace QueueBatch.Impl.Queues
             return client;
         }
 
-        byte[] GetBytes() => gettingPool.TryDequeue(out var bytes) ? bytes : new byte[GetAllocSize];
+        byte[] GetPinnedBytes()
+        {
+            if (gettingPool.TryDequeue(out var bytes))
+                return bytes;
+
+            var chunk = new byte[GetAllocSize];
+
+            // pin immiediately to speed up pinning of the memory
+            handles.Enqueue(GCHandle.Alloc(chunk, GCHandleType.Pinned));
+
+            return chunk;
+        }
+
         void Return(byte[] bytes) => gettingPool.Enqueue(bytes);
         static string GetSAS(string sas) => sas.StartsWith("?") ? sas.Substring(1) : sas;
 
