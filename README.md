@@ -52,7 +52,7 @@ public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
 
 ### Faster queues
 
-`QueueBatch` provides an alternative client for accessing Azure Storage Queues that is much faster then the one provided by SDK (up to 20x). To enable it (it's opt-in), you need to set `.UseFasterQueues` to `true`.
+`QueueBatch` provides an alternative client for accessing Azure Storage Queues that is much faster then the one provided by SDK (up to 20x). To enable it (it's opt-in), you need to set `UseFasterQueues` to `true`.
 
 ```c#
 public static void MyFunc([QueueBatchTrigger("myqueue", UseFasterQueues = true)] IMessageBatch batch)
@@ -69,6 +69,17 @@ As a single operation of getting messages can obtain no more than 32, you can re
 public static void MyFunc([QueueBatchTrigger("myqueue", ParallelGets = 2)] IMessageBatch batch)
 {
   // ...
+}
+```
+
+### Empty batches
+
+Sometimes it might be useful to get notifications about empty batches as well. They can be used to do some other work, like compacting your data or sending a notification that there was a run with nothing to process. After each empty batch, the back-off strategy will delay the next query for messages even more. To enable calls with empty batches, specify the following property
+
+```c#
+public static void MyFunc([QueueBatchTrigger("myqueue", RunWithEmptyBatch = true)] IMessageBatch batch)
+{
+  // now, if no message is retrieved from the queue, MyFunc will still be called
 }
 ```
 

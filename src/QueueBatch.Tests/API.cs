@@ -9,13 +9,13 @@ namespace QueueBatch.Tests
     public class ApiApprovals
     {
         [Test]
-        public void ApproveNServiceBus()
+        public void Approve()
         {
             var publicApi = ApiGenerator.GeneratePublicApi(typeof(IMessageBatch).Assembly);
             Approve(publicApi);
         }
 
-        static void Approve(string publicApi,[CallerFilePath] string filePath = null)
+        static void Approve(string publicApi, [CallerFilePath] string filePath = null)
         {
             var directory = Path.GetDirectoryName(filePath);
             var file = Path.Combine(directory, "approved_api.txt");

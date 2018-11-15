@@ -44,8 +44,8 @@ namespace QueueBatch.Tests
 
             await RunHost<ErrorsMovedToPoison>(async () =>
             {
-                await Batch.AssertIsEmpty();
                 await Poison.Drain(count);
+                await Batch.AssertIsEmpty();
             });
         }
 

@@ -1,3 +1,4 @@
+[assembly: Microsoft.Azure.WebJobs.Hosting.WebJobsStartupAttribute(typeof(QueueBatch.Impl.QueueBatchStartup), null)]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("QueueBatch.Benchmarks")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("QueueBatch.Tests")]
 [assembly: System.Runtime.Versioning.TargetFrameworkAttribute(".NETStandard,Version=v2.0", FrameworkDisplayName="")]
@@ -28,6 +29,15 @@ namespace QueueBatch
         public int MaxBackOffInSeconds { get; set; }
         public int ParallelGets { get; set; }
         public string QueueName { get; }
+        public bool RunWithEmptyBatch { get; set; }
         public bool UseFasterQueues { get; set; }
+    }
+}
+namespace QueueBatch.Impl
+{
+    public class QueueBatchStartup : Microsoft.Azure.WebJobs.Hosting.IWebJobsStartup
+    {
+        public QueueBatchStartup() { }
+        public void Configure(Microsoft.Azure.WebJobs.IWebJobsBuilder builder) { }
     }
 }
