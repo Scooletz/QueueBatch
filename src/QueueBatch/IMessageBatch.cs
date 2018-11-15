@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace QueueBatch
 {
@@ -22,5 +24,11 @@ namespace QueueBatch
         /// Marks all the messages as processed.
         /// </summary>
         void MarkAllAsProcessed();
+    }
+
+    interface IMessageBatchImpl : IMessageBatch
+    {
+        Task Complete(CancellationToken ct);
+        Task RetryAll(CancellationToken ct);
     }
 }

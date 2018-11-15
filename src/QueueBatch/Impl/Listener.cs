@@ -12,11 +12,12 @@ namespace QueueBatch.Impl
 {
     class Listener : IListener
     {
-        readonly RandomizedExponentialBackoffStrategy backoff;
+        readonly RandomizedExponentialBackoffStrategy backOff;
         readonly ITriggeredFunctionExecutor executor;
         readonly int maxRetries;
         readonly QueueFunctionLogic queue;
         readonly TimeSpan visibilityTimeout;
+        readonly bool shouldRunOnEmptyBatch;
         readonly ILoggerFactory loggerFactory;
         readonly Task<IRetrievedMessages>[] gets;
 
@@ -25,15 +26,17 @@ namespace QueueBatch.Impl
         static readonly TimeSpan VisibilityTimeout = TimeSpan.FromMinutes(10.0);
 
         public Listener(ITriggeredFunctionExecutor executor, QueueFunctionLogic queue,
-            TimeSpan maxBackoff, int maxRetries, TimeSpan visibilityTimeout, int parallelGets, ILoggerFactory loggerFactory)
+            TimeSpan maxBackOff, int maxRetries, TimeSpan visibilityTimeout, int parallelGets,
+            bool shouldRunOnEmptyBatch, ILoggerFactory loggerFactory)
         {
             this.executor = executor;
             this.queue = queue;
             this.maxRetries = maxRetries;
             this.visibilityTimeout = visibilityTimeout;
+            this.shouldRunOnEmptyBatch = shouldRunOnEmptyBatch;
             this.loggerFactory = loggerFactory;
             gets = new Task<IRetrievedMessages>[parallelGets];
-            backoff = new RandomizedExponentialBackoffStrategy(TimeSpan.FromMilliseconds(100), maxBackoff);
+            backOff = new RandomizedExponentialBackoffStrategy(TimeSpan.FromMilliseconds(100), maxBackOff);
         }
 
         public Task StartAsync(CancellationToken ct)
@@ -78,10 +81,14 @@ namespace QueueBatch.Impl
                     using (new ComposedDisposable(results))
                     {
                         var messages = results.SelectMany(msgs => msgs.Messages).ToArray();
+                        var isNotEmpty = messages.Length > 0;
 
-                        if (messages.Length > 0)
+                        if (isNotEmpty || shouldRunOnEmptyBatch)
                         {
-                            var batch = new MessageBatch(messages);
+                            var batch = isNotEmpty
+                                ? (IMessageBatchImpl) new MessageBatch(messages, queue, maxRetries, visibilityTimeout)
+                                : EmptyMessageBatch.Instance;
+
                             var data = new TriggeredFunctionData {TriggerValue = batch};
                             var result = await executor.TryExecuteAsync(data, CancellationToken.None).ConfigureAwait(false);
 
@@ -89,11 +96,11 @@ namespace QueueBatch.Impl
                             {
                                 if (result.Succeeded)
                                 {
-                                    await batch.Complete(queue, maxRetries, visibilityTimeout, CancellationToken.None);
+                                    await batch.Complete(CancellationToken.None);
                                 }
                                 else
                                 {
-                                    await batch.RetryAll(queue, maxRetries, visibilityTimeout, CancellationToken.None);
+                                    await batch.RetryAll(CancellationToken.None);
                                 }
                             }
                             catch (Exception ex)
@@ -102,7 +109,8 @@ namespace QueueBatch.Impl
                                 await Delay(false, ct).ConfigureAwait(false);
                             }
 
-                            await Delay(result.Succeeded, ct).ConfigureAwait(false);
+                            // on empty, back-off is performed as usual
+                            await Delay(result.Succeeded && isNotEmpty, ct).ConfigureAwait(false);
                         }
                         else
                         {
@@ -121,6 +129,6 @@ namespace QueueBatch.Impl
             }
         }
 
-        Task Delay(bool executionSucceeded, CancellationToken ct) => Task.Delay(backoff.GetNextDelay(executionSucceeded), ct);
+        Task Delay(bool executionSucceeded, CancellationToken ct) => Task.Delay(backOff.GetNextDelay(executionSucceeded), ct);
     }
 }

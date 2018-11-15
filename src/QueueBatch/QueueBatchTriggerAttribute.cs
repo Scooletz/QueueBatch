@@ -29,7 +29,7 @@ namespace QueueBatch
         public string QueueName { get; }
 
         /// <summary>
-        /// Gets the maximum backoff timespan that can be used for the poller.
+        /// Gets the maximum back-off timespan that can be used for the poller.
         /// </summary>
         public int MaxBackOffInSeconds { get; set; }
 
@@ -42,5 +42,10 @@ namespace QueueBatch
         /// If set to true, instead of using Azure Storage SDK Queues the listeners will use a custom implementation of queues client (with a tailored XML deserialization).
         /// </summary>
         public bool UseFasterQueues { get; set; }
+
+        /// <summary>
+        /// By default, the triggered function is executed only for non-empty batches. Setting this to true, will pass also the empty batches to execution.
+        /// </summary>
+        public bool RunWithEmptyBatch { get; set; }
     }
 }

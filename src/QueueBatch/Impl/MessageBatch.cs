@@ -6,16 +6,22 @@ using QueueBatch.Impl.Queues;
 
 namespace QueueBatch.Impl
 {
-    class MessageBatch : IMessageBatch
+    class MessageBatch : IMessageBatchImpl
     {
         readonly Message[] messages;
+        readonly QueueFunctionLogic queue;
+        readonly int maxDequeueCount;
+        readonly TimeSpan visibilityTimeout;
         readonly HashSet<string> processed;
 
         static readonly HashSet<string> Empty = new HashSet<string>();
 
-        public MessageBatch(Message[] messages)
+        public MessageBatch(Message[] messages, QueueFunctionLogic queue, int maxDequeueCount, TimeSpan visibilityTimeout)
         {
             this.messages = messages;
+            this.queue = queue;
+            this.maxDequeueCount = maxDequeueCount;
+            this.visibilityTimeout = visibilityTimeout;
             processed = new HashSet<string>();
         }
 
@@ -31,20 +37,11 @@ namespace QueueBatch.Impl
             }
         }
 
-        public Task Complete(QueueFunctionLogic queue, int maxDequeueCount, TimeSpan visibilityTimeout,
-            CancellationToken ct)
-        {
-            return Complete(queue, maxDequeueCount, visibilityTimeout, ct, processed);
-        }
+        public Task Complete(CancellationToken ct) => Complete(ct, processed);
 
-        public Task RetryAll(QueueFunctionLogic queue, int maxDequeueCount, TimeSpan visibilityTimeout,
-            CancellationToken ct)
-        {
-            return Complete(queue, maxDequeueCount, visibilityTimeout, ct, Empty);
-        }
+        public Task RetryAll(CancellationToken ct) => Complete(ct, Empty);
 
-        Task Complete(QueueFunctionLogic queue, int maxDequeueCount, TimeSpan visibilityTimeout,
-            CancellationToken ct, HashSet<string> processed)
+        Task Complete(CancellationToken ct, HashSet<string> processed)
         {
             var tasks = new Task[messages.Length];
             for (var i = 0; i < messages.Length; i++)

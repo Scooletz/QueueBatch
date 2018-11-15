@@ -127,7 +127,7 @@ namespace QueueBatch.Impl.Queues
 
             var chunk = new byte[GetAllocSize];
 
-            // pin immiediately to speed up pinning of the memory
+            // pin immediately to speed up pinning of the memory
             handles.Enqueue(GCHandle.Alloc(chunk, GCHandleType.Pinned));
 
             return chunk;
