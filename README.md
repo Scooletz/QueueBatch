@@ -84,6 +84,15 @@ public static void MyFunc([QueueBatchTrigger("myqueue", RunWithEmptyBatch = true
   // now, if no message is retrieved from the queue, MyFunc will still be called
 }
 ```
+### Connection
+
+`Connection` is an optional property to specify queue's storage account. It's a name of an app setting that contains the storage connection string to use for this binding. When connection property is empty then default `AzureWebJobsStorage` connection string is used.
+```c#
+public static void MyFunc([QueueBatchTrigger("myqueue", Connection = "StorageConnectionAppSetting")] IMessageBatch batch)
+{
+  // ...
+}
+```
 
 ## Licensing
 

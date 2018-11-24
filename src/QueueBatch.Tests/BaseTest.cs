@@ -34,6 +34,7 @@ namespace QueueBatch.Tests
             Batch = queues.GetQueueReference(InputQueue);
             Output = queues.GetQueueReference(OutputQueue);
             Poison = queues.GetQueueReference(InputQueue + BindingProvider.PoisonQueueSuffix);
+
             return Task.WhenAll(Batch.CreateIfNotExistsAsync(), Output.CreateIfNotExistsAsync(), Poison.CreateIfNotExistsAsync());
         }
 
@@ -74,13 +75,14 @@ namespace QueueBatch.Tests
             }
         }
 
-        IHost BuildHost<TFunctionProvidingType>()
+        static IHost BuildHost<TFunctionProvidingType>()
         {
             return new HostBuilder()
                 .ConfigureWebJobs(b =>
                 {
-                    b.Services.AddSingleton<IQueueClientProvider>(new CloudQueueProvider(queues));
-                    b.Services.AddSingleton<StorageAccountProvider>(new DeveloperStorageAccountProvider());
+                    b.Services.AddSingleton<DeveloperStorageAccountProvider>();
+                    b.Services.AddSingleton<ICloudStorageAccountProvider>(sp => sp.GetRequiredService<DeveloperStorageAccountProvider>());
+                    b.Services.AddSingleton<StorageAccountProvider>(sp => sp.GetRequiredService<DeveloperStorageAccountProvider>());
                     b.AddQueueBatch();
                     b.AddAzureStorageCoreServices();
                     b.AddAzureStorage();
@@ -89,25 +91,14 @@ namespace QueueBatch.Tests
                 .Build();
         }
 
-        class CloudQueueProvider : IQueueClientProvider
-        {
-            readonly CloudQueueClient client;
-
-            public CloudQueueProvider(CloudQueueClient client)
-            {
-                this.client = client;
-            }
-
-            public CloudQueueClient GetClient() => client;
-        }
-
-        class DeveloperStorageAccountProvider : StorageAccountProvider
+        class DeveloperStorageAccountProvider : StorageAccountProvider, ICloudStorageAccountProvider
         {
             public DeveloperStorageAccountProvider()
                 : base(null)
             {
             }
 
+            CloudStorageAccount ICloudStorageAccountProvider.Get(string name) => CloudStorageAccount.DevelopmentStorageAccount;
             public override StorageAccount Get(string name) => StorageAccount.New(CloudStorageAccount.DevelopmentStorageAccount);
         }
     }

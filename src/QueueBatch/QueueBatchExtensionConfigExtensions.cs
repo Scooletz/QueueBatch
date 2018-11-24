@@ -13,8 +13,8 @@ namespace QueueBatch
                 throw new ArgumentNullException(nameof(builder));
 
             builder.AddExtension<QueueBatchExtensionConfigProvider>();
+            builder.Services.TryAddSingleton<ICloudStorageAccountProvider, CloudStorageAccountProvider>();
             builder.Services.TryAddSingleton<BindingProvider>();
-            builder.Services.TryAddSingleton<IQueueClientProvider, QueueClientProvider>();
         }
     }
 }

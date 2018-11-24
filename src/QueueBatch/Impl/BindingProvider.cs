@@ -13,12 +13,12 @@ namespace QueueBatch.Impl
         public const string PoisonQueueSuffix = "-poison";
 
         readonly ILoggerFactory loggerFactory;
-        readonly IQueueClientProvider provider;
+        readonly ICloudStorageAccountProvider storageAccountProvider;
 
-        public BindingProvider(ILoggerFactory loggerFactory, IQueueClientProvider provider)
+        public BindingProvider(ILoggerFactory loggerFactory, ICloudStorageAccountProvider storageAccountProvider)
         {
             this.loggerFactory = loggerFactory;
-            this.provider = provider;
+            this.storageAccountProvider = storageAccountProvider;
         }
 
         public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -29,9 +29,14 @@ namespace QueueBatch.Impl
                 return null;
 
             var queueName = attr.QueueName;
+            var queueStorageConnection = attr.Connection;
 
-            var messageQueue = provider.GetClient().GetQueueReference(queueName);
-            var poisonQueue = CreatePoisonQueue(queueName);
+            var storageAccount = storageAccountProvider.Get(queueStorageConnection);
+
+            var queueClient = storageAccount.CreateCloudQueueClient();
+            var messageQueue = queueClient.GetQueueReference(queueName);
+
+            var poisonQueue = CreatePoisonQueue(queueClient, queueName);
 
             await Task.WhenAll(
                 messageQueue.CreateIfNotExistsAsync(),
@@ -47,9 +52,9 @@ namespace QueueBatch.Impl
             return new TriggerBinding(context.Parameter, queue, TimeSpan.FromSeconds(attr.MaxBackOffInSeconds), attr.ParallelGets, attr.RunWithEmptyBatch, loggerFactory);
         }
 
-        CloudQueue CreatePoisonQueue(string name)
+        CloudQueue CreatePoisonQueue(CloudQueueClient queueClient, string name)
         {
-            return provider.GetClient().GetQueueReference(name + PoisonQueueSuffix);
+            return queueClient.GetQueueReference(name + PoisonQueueSuffix);
         }
     }
 }

@@ -47,5 +47,10 @@ namespace QueueBatch
         /// By default, the triggered function is executed only for non-empty batches. Setting this to true, will pass also the empty batches to execution.
         /// </summary>
         public bool RunWithEmptyBatch { get; set; }
+
+        /// <summary>
+        /// Gets or sets the app setting name that contains the Azure Storage connection string.
+        /// </summary>
+        public string Connection { get; set; }
     }
 }

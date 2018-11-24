@@ -26,6 +26,7 @@ namespace QueueBatch
     public class QueueBatchTriggerAttribute : System.Attribute
     {
         public QueueBatchTriggerAttribute(string queueName) { }
+        public string Connection { get; set; }
         public int MaxBackOffInSeconds { get; set; }
         public int ParallelGets { get; set; }
         public string QueueName { get; }
