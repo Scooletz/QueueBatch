@@ -1,4 +1,4 @@
-https://dev.azure.com/scooletz/devops/_apis/build/status/Scooletz.QueueBatch?branchName=develop
+[![Build Status](https://dev.azure.com/scooletz/devops/_apis/build/status/Scooletz.QueueBatch)](https://dev.azure.com/scooletz/devops/_build/latest?definitionId=1)
 
 ![Icon](https://raw.githubusercontent.com/Scooletz/QueueBatch/develop/package_icon.png)
 
