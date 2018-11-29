@@ -78,7 +78,15 @@ namespace QueueBatch.Impl.Queues
             }
         }
 
-        static Result<T> FromException<T>(StorageException ex) => new Result<T>((HttpStatusCode)ex.RequestInformation.HttpStatusCode, ex.RequestInformation.ExtendedErrorInformation.ErrorCode, ex.RequestInformation.ExtendedErrorInformation.ErrorMessage);
+        static Result<T> FromException<T>(StorageException ex)
+        {
+            var req = ex.RequestInformation;
+            var extended = req.ExtendedErrorInformation;
+
+            return new Result<T>((HttpStatusCode) req.HttpStatusCode,
+                extended?.ErrorCode,
+                extended?.ErrorMessage);
+        }
 
         class RetrievedMessages : IRetrievedMessages
         {
