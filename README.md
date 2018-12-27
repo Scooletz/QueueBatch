@@ -19,7 +19,7 @@ Accessing the same resource with high frequency might simply not work. With `Que
 
 ### Basic
 
-To use `QueueBatch` in your Function application, you need to use a custom `IMessageBatch` parameter type to accept a batch and mark it with an appropriate attribute
+To use `QueueBatch` in your Function application, you need to use a custom `IMessageBatch` parameter type to accept a batch and mark it with an appropriate attribute. To resolve queue name from configuration file wrap it with `%` sign, i.e. `%queue-app-setting-key%`
 
 ```c#
 public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -14,11 +16,14 @@ namespace QueueBatch.Impl
 
         readonly ILoggerFactory loggerFactory;
         readonly ICloudStorageAccountProvider storageAccountProvider;
+        readonly INameResolver nameResolver;
 
-        public BindingProvider(ILoggerFactory loggerFactory, ICloudStorageAccountProvider storageAccountProvider)
+        public BindingProvider(ILoggerFactory loggerFactory, ICloudStorageAccountProvider storageAccountProvider,
+            INameResolver nameResolver)
         {
             this.loggerFactory = loggerFactory;
             this.storageAccountProvider = storageAccountProvider;
+            this.nameResolver = nameResolver;
         }
 
         public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -28,7 +33,7 @@ namespace QueueBatch.Impl
             if (attr == null)
                 return null;
 
-            var queueName = attr.QueueName;
+            var queueName = ResolveName(attr.QueueName);
             var queueStorageConnection = attr.Connection;
 
             var storageAccount = storageAccountProvider.Get(queueStorageConnection);
@@ -51,10 +56,15 @@ namespace QueueBatch.Impl
 
             return new TriggerBinding(context.Parameter, queue, TimeSpan.FromSeconds(attr.MaxBackOffInSeconds), attr.ParallelGets, attr.RunWithEmptyBatch, loggerFactory);
         }
-
         CloudQueue CreatePoisonQueue(CloudQueueClient queueClient, string name)
         {
             return queueClient.GetQueueReference(name + PoisonQueueSuffix);
+        }
+
+        string ResolveName(string queueName)
+        {
+            var resolvedName = nameResolver?.ResolveWholeString(queueName) ?? queueName;
+            return resolvedName.ToLowerInvariant();
         }
     }
 }
