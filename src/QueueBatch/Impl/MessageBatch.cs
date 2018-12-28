@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using QueueBatch.Impl.Queues;
@@ -14,9 +13,9 @@ namespace QueueBatch.Impl
         readonly QueueFunctionLogic queue;
         readonly int maxDequeueCount;
         readonly TimeSpan visibilityTimeout;
-        readonly ConcurrentBag<string> processed;
+        readonly ConcurrentDictionary<string, string> processed;
 
-        static readonly ConcurrentBag<string> Empty = new ConcurrentBag<string>();
+        static readonly IReadOnlyDictionary<string, string> Empty = new Dictionary<string, string>();
 
         public MessageBatch(Message[] messages, QueueFunctionLogic queue, int maxDequeueCount, TimeSpan visibilityTimeout)
         {
@@ -24,18 +23,18 @@ namespace QueueBatch.Impl
             this.queue = queue;
             this.maxDequeueCount = maxDequeueCount;
             this.visibilityTimeout = visibilityTimeout;
-            processed = new ConcurrentBag<string>();
+            processed = new ConcurrentDictionary<string, string>();
         }
 
         public IEnumerable<Message> Messages => messages;
 
-        void IMessageBatch.MarkAsProcessed(Message message) => processed.Add(message.Id);
+        void IMessageBatch.MarkAsProcessed(Message message) => processed.TryAdd(message.Id, message.Id);
 
         void IMessageBatch.MarkAllAsProcessed()
         {
             foreach (var message in messages)
             {
-                processed.Add(message.Id);
+                processed.TryAdd(message.Id, message.Id);
             }
         }
 
@@ -43,16 +42,15 @@ namespace QueueBatch.Impl
 
         public Task RetryAll(CancellationToken ct) => Complete(ct, Empty);
 
-        Task Complete(CancellationToken ct, IEnumerable<string> processed)
+        Task Complete(CancellationToken ct, IReadOnlyDictionary<string, string> processed)
         {
             var tasks = new Task[messages.Length];
-            var messagesToDelete = processed.ToList();
 
             for (var i = 0; i < messages.Length; i++)
             {
                 var message = messages[i];
 
-                if (messagesToDelete.Contains(message.Id))
+                if (processed.ContainsKey(message.Id))
                 {
                     tasks[i] = queue.DeleteMessage(message, ct);
                 }
