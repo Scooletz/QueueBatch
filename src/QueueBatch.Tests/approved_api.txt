@@ -31,6 +31,7 @@ namespace QueueBatch
         public int ParallelGets { get; set; }
         public string QueueName { get; }
         public bool RunWithEmptyBatch { get; set; }
+        public bool SuccessOrFailAsBatch { get; set; }
         public bool UseFasterQueues { get; set; }
     }
 }

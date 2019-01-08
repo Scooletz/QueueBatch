@@ -52,5 +52,10 @@ namespace QueueBatch
         /// Gets or sets the app setting name that contains the Azure Storage connection string.
         /// </summary>
         public string Connection { get; set; }
+
+        /// <summary>
+        /// Gets or sets the 
+        /// </summary>
+        public bool SuccessOrFailAsBatch { get; set; } = true;
     }
 }
