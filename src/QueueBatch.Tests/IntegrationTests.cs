@@ -15,13 +15,27 @@ namespace QueueBatch.Tests
     public class IntegrationTests : BaseTest
     {
         [Test]
-        public async Task Can_mark_message_as_processed_when_other_cause_exception()
+        public async Task Messages_failed_as_batch_when_SuccessOrFailAsBatch_set_true()
         {
             const int count = 4;
             await SendUnique(count);
-            await Batch.AddMessageAsync(new CloudQueueMessage("non-json-string-will-cause-exception"));
+            await Batch.AddMessageAsync(new CloudQueueMessage("bad-json-string-will-cause-exception"));
 
-            await RunHost<TheSecondMessageInBatchCauseException>(async () =>
+            await RunHost<SuccessOrFailAsBatchTrue>(async () =>
+            {
+                await Poison.Drain(5);
+                await Batch.AssertIsEmpty();
+            });
+        }
+
+        [Test]
+        public async Task Can_mark_message_as_processed_while_other_cause_exception_when_SuccessOrFailAsBatch_set_false()
+        {
+            const int count = 4;
+            await SendUnique(count);
+            await Batch.AddMessageAsync(new CloudQueueMessage("bad-json-string-will-cause-exception"));
+
+            await RunHost<SuccessOrFailAsBatchFalse>(async () =>
             {
                 await Output.Drain(4);
                 await Poison.Drain(1);
@@ -29,27 +43,42 @@ namespace QueueBatch.Tests
             });
         }
 
-        public class TheSecondMessageInBatchCauseException
+        public class SuccessOrFailAsBatchTrue
+        {
+            public static async Task Do(
+                  [QueueBatchTrigger(InputQueue, MaxBackOffInSeconds = 1, SuccessOrFailAsBatch = true)] IMessageBatch batch
+                , [Queue(OutputQueue)] CloudQueue output)
+            {
+                await SomeMessageInBatchCauseException(batch, output);
+            }
+        }
+
+        public class SuccessOrFailAsBatchFalse
         {
             public static async Task Do(
                   [QueueBatchTrigger(InputQueue, MaxBackOffInSeconds = 1, SuccessOrFailAsBatch = false)] IMessageBatch batch
                 , [Queue(OutputQueue)] CloudQueue output)
             {
-                var messages = batch.Messages.ToList();
-                var tasks = messages.Select((m, i) =>
-                {
-                    return Task.Run(async () =>
-                    {
-                        var json = Encoding.UTF8.GetString(m.Payload.Span);
-                        JsonConvert.DeserializeObject<IDictionary<string, string>>(json);
-                        await output.AddMessageAsync(new CloudQueueMessage(m.Id));
+                await SomeMessageInBatchCauseException(batch, output);
+            }            
+        }
 
-                        batch.MarkAsProcessed(m);
-                    });
-                }).ToList();
-                
-                await Task.WhenAll(tasks);
-            }
+        private static async Task SomeMessageInBatchCauseException(IMessageBatch batch, CloudQueue output)
+        {
+            var messages = batch.Messages.ToList();
+            var tasks = messages.Select((m, i) =>
+            {
+                return Task.Run(async () =>
+                {
+                    var json = Encoding.UTF8.GetString(m.Payload.Span);
+                    JsonConvert.DeserializeObject<IDictionary<string, string>>(json);
+                    await output.AddMessageAsync(new CloudQueueMessage(m.Id));
+
+                    batch.MarkAsProcessed(m);
+                });
+            });
+
+            await Task.WhenAll(tasks);
         }
 
         [Test]
