@@ -41,7 +41,7 @@ namespace QueueBatch.Impl.Queues
             {
                 var url = messageUriWithSas + "&numofmessages=32&visibilitytimeout=" + seconds;
 
-                using (var response = await http.GetAsync(url, ct).ConfigureAwait(false))
+                using (var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false))
                 {
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
