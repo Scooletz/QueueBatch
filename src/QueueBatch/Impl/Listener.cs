@@ -17,7 +17,7 @@ namespace QueueBatch.Impl
         readonly int maxRetries;
         readonly QueueFunctionLogic queue;
         readonly TimeSpan visibilityTimeout;
-        private readonly bool successOrFailAsBatch;
+        readonly bool successOrFailAsBatch;
         readonly bool shouldRunOnEmptyBatch;
         readonly ILoggerFactory loggerFactory;
         readonly Task<IRetrievedMessages>[] gets;
