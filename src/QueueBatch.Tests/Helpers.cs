@@ -39,7 +39,6 @@ namespace QueueBatch.Tests
 
             return received;
         }
-        
         public static async Task AssertIsEmpty(this CloudQueue queue)
         {
             var messages = await queue.GetMessagesAsync(32);
