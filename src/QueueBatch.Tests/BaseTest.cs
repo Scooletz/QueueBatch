@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using QueueBatch.Impl;
 
@@ -48,7 +47,7 @@ namespace QueueBatch.Tests
             var list = new List<string>();
             for (var i = 0; i < count; i++)
             {
-                var content = JsonConvert.SerializeObject(new { id = Guid.NewGuid().ToString("N") });
+                var content = Guid.NewGuid().ToString("N");
                 list.Add(content);
                 sends[i] = Batch.AddMessageAsync(new CloudQueueMessage(content));
             }

@@ -19,7 +19,7 @@ namespace QueueBatch.Tests
         {
             const int count = 4;
             await SendUnique(count);
-            await Batch.AddMessageAsync(new CloudQueueMessage("bad-json-string-will-cause-exception"));
+            await Batch.AddMessageAsync(new CloudQueueMessage("bad-guid"));
 
             await RunHost<SuccessOrFailAsBatchTrue>(async () =>
             {
@@ -33,7 +33,7 @@ namespace QueueBatch.Tests
         {
             const int count = 4;
             await SendUnique(count);
-            await Batch.AddMessageAsync(new CloudQueueMessage("bad-json-string-will-cause-exception"));
+            await Batch.AddMessageAsync(new CloudQueueMessage("bad-guid"));
 
             await RunHost<SuccessOrFailAsBatchFalse>(async () =>
             {
@@ -66,19 +66,15 @@ namespace QueueBatch.Tests
         private static async Task SomeMessageInBatchCauseException(IMessageBatch batch, CloudQueue output)
         {
             var messages = batch.Messages.ToList();
-            var tasks = messages.Select((m, i) =>
+
+            foreach (var m in messages)
             {
-                return Task.Run(async () =>
-                {
-                    var json = Encoding.UTF8.GetString(m.Payload.Span);
-                    JsonConvert.DeserializeObject<IDictionary<string, string>>(json);
-                    await output.AddMessageAsync(new CloudQueueMessage(m.Id));
+                var content = Encoding.UTF8.GetString(m.Payload.Span);
+                var guid = Guid.Parse(content);
+                await output.AddMessageAsync(new CloudQueueMessage(m.Id));
 
-                    batch.MarkAsProcessed(m);
-                });
-            });
-
-            await Task.WhenAll(tasks);
+                batch.MarkAsProcessed(m);
+            }
         }
 
         [Test]
@@ -96,9 +92,7 @@ namespace QueueBatch.Tests
 
         public class SimpleBatchDispatch
         {
-            public static async Task Do(
-                  [QueueBatchTrigger(InputQueue, ParallelGets = 2, MaxBackOffInSeconds = 30)] IMessageBatch batch
-                , [Queue(OutputQueue)] CloudQueue output)
+            public static async Task Do([QueueBatchTrigger(InputQueue, ParallelGets = 2, MaxBackOffInSeconds = 30)] IMessageBatch batch, [Queue(OutputQueue)] CloudQueue output)
             {
                 foreach (var message in batch.Messages)
                 {
