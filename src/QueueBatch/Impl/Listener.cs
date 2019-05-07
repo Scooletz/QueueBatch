@@ -17,6 +17,7 @@ namespace QueueBatch.Impl
         readonly int maxRetries;
         readonly QueueFunctionLogic queue;
         readonly TimeSpan visibilityTimeout;
+        readonly bool successOrFailAsBatch;
         readonly bool shouldRunOnEmptyBatch;
         readonly ILoggerFactory loggerFactory;
         readonly Task<IRetrievedMessages>[] gets;
@@ -26,13 +27,14 @@ namespace QueueBatch.Impl
         static readonly TimeSpan VisibilityTimeout = TimeSpan.FromMinutes(10.0);
 
         public Listener(ITriggeredFunctionExecutor executor, QueueFunctionLogic queue,
-            TimeSpan maxBackOff, int maxRetries, TimeSpan visibilityTimeout, int parallelGets,
+            TimeSpan maxBackOff, int maxRetries, TimeSpan visibilityTimeout, int parallelGets, bool successOrFailAsBatch,
             bool shouldRunOnEmptyBatch, ILoggerFactory loggerFactory)
         {
             this.executor = executor;
             this.queue = queue;
             this.maxRetries = maxRetries;
             this.visibilityTimeout = visibilityTimeout;
+            this.successOrFailAsBatch = successOrFailAsBatch;
             this.shouldRunOnEmptyBatch = shouldRunOnEmptyBatch;
             this.loggerFactory = loggerFactory;
             gets = new Task<IRetrievedMessages>[parallelGets];
@@ -94,7 +96,7 @@ namespace QueueBatch.Impl
 
                             try
                             {
-                                if (result.Succeeded)
+                                if (result.Succeeded || !successOrFailAsBatch)
                                 {
                                     await batch.Complete(CancellationToken.None);
                                 }

@@ -54,7 +54,7 @@ namespace QueueBatch.Impl
                 ? new QueueFunctionLogic(SdkQueue.CreateFast(messageQueue, cache), SdkQueue.CreateFast(poisonQueue, cache))
                 : new QueueFunctionLogic(new SdkQueue(messageQueue), new SdkQueue(poisonQueue));
 
-            return new TriggerBinding(context.Parameter, queue, TimeSpan.FromSeconds(attr.MaxBackOffInSeconds), attr.ParallelGets, attr.RunWithEmptyBatch, loggerFactory);
+            return new TriggerBinding(context.Parameter, queue, TimeSpan.FromSeconds(attr.MaxBackOffInSeconds), attr.ParallelGets, attr.SuccessOrFailAsBatch, attr.RunWithEmptyBatch, loggerFactory);
         }
         CloudQueue CreatePoisonQueue(CloudQueueClient queueClient, string name)
         {

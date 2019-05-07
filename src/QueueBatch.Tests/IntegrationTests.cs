@@ -1,16 +1,82 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage.Queue;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace QueueBatch.Tests
 {
     public class IntegrationTests : BaseTest
     {
+        [Test]
+        public async Task Messages_failed_as_batch_when_SuccessOrFailAsBatch_set_true()
+        {
+            const int count = 4;
+            await SendUnique(count);
+            await Batch.AddMessageAsync(new CloudQueueMessage("bad-guid"));
+
+            await RunHost<SuccessOrFailAsBatchTrue>(async () =>
+            {
+                await Poison.Drain(5);
+                await Batch.AssertIsEmpty();
+            });
+        }
+
+        [Test]
+        public async Task Can_mark_message_as_processed_while_other_cause_exception_when_SuccessOrFailAsBatch_set_false()
+        {
+            const int count = 4;
+            await SendUnique(count);
+            await Batch.AddMessageAsync(new CloudQueueMessage("bad-guid"));
+
+            await RunHost<SuccessOrFailAsBatchFalse>(async () =>
+            {
+                await Output.Drain(4);
+                await Poison.Drain(1);
+                await Batch.AssertIsEmpty();
+            });
+        }
+
+        public class SuccessOrFailAsBatchTrue
+        {
+            public static async Task Do(
+                  [QueueBatchTrigger(InputQueue, MaxBackOffInSeconds = 1, SuccessOrFailAsBatch = true)] IMessageBatch batch
+                , [Queue(OutputQueue)] CloudQueue output)
+            {
+                await SomeMessageInBatchCauseException(batch, output);
+            }
+        }
+
+        public class SuccessOrFailAsBatchFalse
+        {
+            public static async Task Do(
+                  [QueueBatchTrigger(InputQueue, MaxBackOffInSeconds = 1, SuccessOrFailAsBatch = false)] IMessageBatch batch
+                , [Queue(OutputQueue)] CloudQueue output)
+            {
+                await SomeMessageInBatchCauseException(batch, output);
+            }            
+        }
+
+        private static async Task SomeMessageInBatchCauseException(IMessageBatch batch, CloudQueue output)
+        {
+            var messages = batch.Messages.ToList();
+
+            foreach (var m in messages)
+            {
+                var content = Encoding.UTF8.GetString(m.Payload.Span);
+                var guid = Guid.Parse(content);
+                await output.AddMessageAsync(new CloudQueueMessage(m.Id));
+
+                batch.MarkAsProcessed(m);
+            }
+        }
+
         [Test]
         public async Task Simple_batch_dispatch()
         {
@@ -105,5 +171,6 @@ namespace QueueBatch.Tests
                 return Task.CompletedTask;
             }
         }
+
     }
 }

@@ -19,13 +19,15 @@ namespace QueueBatch.Impl
         readonly ILoggerFactory loggerFactory;
         readonly ParameterInfo param;
         readonly QueueFunctionLogic queue;
+        private bool successOrFailAsBatch;
 
-        public TriggerBinding(ParameterInfo param, QueueFunctionLogic queue, TimeSpan maxBackOff, int parallelGets, bool shouldRunOnEmptyBatch, ILoggerFactory loggerFactory)
+        public TriggerBinding(ParameterInfo param, QueueFunctionLogic queue, TimeSpan maxBackOff, int parallelGets, bool successOrFailAsBatch, bool shouldRunOnEmptyBatch, ILoggerFactory loggerFactory)
         {
             this.param = param;
             this.queue = queue;
             this.maxBackOff = maxBackOff;
             this.parallelGets = parallelGets;
+            this.successOrFailAsBatch = successOrFailAsBatch;
             this.shouldRunOnEmptyBatch = shouldRunOnEmptyBatch;
             this.loggerFactory = loggerFactory;
             BindingDataContract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
@@ -47,7 +49,7 @@ namespace QueueBatch.Impl
 
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
         {
-            return Task.FromResult<IListener>(new Listener(context.Executor, queue, maxBackOff, 5, TimeSpan.FromSeconds(1), parallelGets, shouldRunOnEmptyBatch, loggerFactory));
+            return Task.FromResult<IListener>(new Listener(context.Executor, queue, maxBackOff, 5, TimeSpan.FromSeconds(1), parallelGets, successOrFailAsBatch, shouldRunOnEmptyBatch, loggerFactory));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

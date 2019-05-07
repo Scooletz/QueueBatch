@@ -35,10 +35,10 @@ public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
 }
 ```
 
-You can also acknowledge only some of the messages. The rest, will be retried in a similar manner to the regural `[QueueTrigger]`
+With `SuccessOrFailAsBatch` set to `false`, you can also acknowledge only some of the messages. The rest, will be retried in a similar manner to the regural `[QueueTrigger]`
 
 ```c#
-public static void MyFunc([QueueBatchTrigger("myqueue")] IMessageBatch batch)
+public static void MyFunc([QueueBatchTrigger("myqueue", SuccessOrFailAsBatch = false)] IMessageBatch batch)
 {
   foreach (var msg in batch.Messages)
   {

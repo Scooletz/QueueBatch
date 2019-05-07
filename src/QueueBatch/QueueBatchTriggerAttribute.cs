@@ -52,5 +52,10 @@ namespace QueueBatch
         /// Gets or sets the app setting name that contains the Azure Storage connection string.
         /// </summary>
         public string Connection { get; set; }
+
+        /// <summary>
+        /// If set to false, each message in same batch can be marked as processed independently and they will not affected when other messages cause exception, default to true
+        /// </summary>
+        public bool SuccessOrFailAsBatch { get; set; } = true;
     }
 }
