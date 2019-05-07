@@ -56,6 +56,6 @@ namespace QueueBatch
         /// <summary>
         /// If set to false, each message in same batch can be marked as processed independently and they will not affected when other messages cause exception, default to true
         /// </summary>
-        public bool SuccessOrFailAsBatch { get; set; } = true;
+        public bool SuccessOrFailAsBatch { get; set; }
     }
 }
